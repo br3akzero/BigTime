@@ -130,7 +130,7 @@ import SwiftUI
 struct MyApp: App {
     var body: some Scene {
         WindowGroup {
-            RouterView(root: .home)
+            RouterView<Route>(root: .home)
         }
     }
 }
@@ -392,9 +392,9 @@ Contributions are welcome! Please:
 
 ## Support
 
-- 📝 [Documentation](https://github.com/br3akzero/BigTime#readme)
-- 🐛 [Issue Tracker](https://github.com/br3akzero/BigTime/issues)
-- 💬 [Discussions](https://github.com/br3akzero/BigTime/discussions)
+- [Documentation](https://github.com/br3akzero/BigTime#readme)
+- [Issue Tracker](https://github.com/br3akzero/BigTime/issues)
+- [Discussions](https://github.com/br3akzero/BigTime/discussions)
 
 ## Author
 
@@ -402,4 +402,4 @@ Created by [@br3akzero](https://github.com/br3akzero)
 
 ## Acknowledgments
 
-Built with ❤️ using Swift 6.0 and SwiftUI
+Built with using Swift 6.0 and SwiftUI

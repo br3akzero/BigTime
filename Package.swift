@@ -6,11 +6,11 @@ import PackageDescription
 let package = Package(
 	name: "BigTime",
 	platforms: [
-		.iOS(.v18),
-		.macOS(.v15),
+		.iOS(.v17),
+		.macOS(.v14),
 		.watchOS(.v11),
-		.tvOS(.v18),
-		.visionOS(.v2),
+		.tvOS(.v17),
+		.visionOS(.v1),
 	],
 	products: [
 		.library(
