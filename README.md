@@ -307,19 +307,19 @@ let router = Router(
 #### `Routable`
 Protocol that your Route enum must conform to:
 - `Hashable` - For NavigationStack path
-- `Sendable` - For concurrency safety
 - `Identifiable` - For SwiftUI list/forEach
 - `CustomStringConvertible` - For logging
 - `View` - To render the route
+- `@MainActor` - Must be used on the main actor only
 
 #### `TabRoutable`
 Protocol that your TabRoute enum must conform to:
 - `Hashable` - For tab selection
-- `Sendable` - For concurrency safety
 - `Identifiable` - For SwiftUI tabs
 - `CustomStringConvertible` - For logging
 - `CaseIterable` - To enumerate all tabs
 - `associatedtype RouteType: Routable` - The route type for this tab
+- `@MainActor` - Must be used on the main actor only
 
 ### Classes
 
