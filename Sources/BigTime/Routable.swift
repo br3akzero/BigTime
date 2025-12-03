@@ -10,7 +10,8 @@ import SwiftUI
 
 /// Protocol that defines a navigable route in the app
 /// Your Route enum should conform to this protocol
-public protocol Routable: Hashable, Sendable, Identifiable, CustomStringConvertible, View {
+@MainActor
+public protocol Routable: Hashable, Identifiable, CustomStringConvertible, View {
 	/// Unique identifier for the route
 	var id: UUID { get }
 
