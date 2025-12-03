@@ -10,7 +10,8 @@ import Foundation
 
 /// Protocol that defines a tab in a tab-based navigation system
 /// Your TabRoute enum should conform to this protocol
-public protocol TabRoutable: Hashable, Sendable, Identifiable, CustomStringConvertible, CaseIterable
+@MainActor
+public protocol TabRoutable: Hashable, Identifiable, CustomStringConvertible, CaseIterable
 	where AllCases: RandomAccessCollection
 {
 	/// The type of Route this tab uses
