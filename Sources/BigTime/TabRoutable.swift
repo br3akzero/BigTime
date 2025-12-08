@@ -8,12 +8,16 @@
 
 import Foundation
 
+#if canImport(SwiftUI)
+	import SwiftUI
+#endif
+
 /// Protocol that defines a tab in a tab-based navigation system
 /// Your TabRoute enum should conform to this protocol
 @MainActor
-public protocol TabRoutable: Hashable, Identifiable, CustomStringConvertible, CaseIterable
-	where AllCases: RandomAccessCollection
-{
+public protocol TabRoutable: Hashable, Identifiable, CustomStringConvertible,
+	CaseIterable
+where AllCases: RandomAccessCollection {
 	/// The type of Route this tab uses
 	associatedtype RouteType: Routable
 
@@ -22,6 +26,11 @@ public protocol TabRoutable: Hashable, Identifiable, CustomStringConvertible, Ca
 
 	/// Display title for the tab
 	var title: String { get }
+
+	// In TabRoutable protocol
+	#if canImport(SwiftUI)
+		var localizedTitle: LocalizedStringKey? { get }
+	#endif
 
 	/// SF Symbol icon name for the tab
 	var icon: String { get }

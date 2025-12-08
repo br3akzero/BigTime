@@ -42,7 +42,9 @@ public struct TabRouterView<TabRoute: TabRoutable>: View {
 		subsystem: String? = nil,
 		onScreenView: ((String) -> Void)? = nil
 	) {
-		self._tabRouter = State(initialValue: TabRouter(selectedTab: selectedTab, subsystem: subsystem))
+		self._tabRouter = State(
+			initialValue: TabRouter(selectedTab: selectedTab, subsystem: subsystem)
+		)
 		self.onScreenView = onScreenView
 	}
 
@@ -56,7 +58,11 @@ public struct TabRouterView<TabRoute: TabRoutable>: View {
 				)
 				.tag(tab)
 				.tabItem {
-					Label(tab.title, systemImage: tab.icon)
+					if let localizedTitle = tab.localizedTitle {
+						Label(localizedTitle, systemImage: tab.icon)
+					} else {
+						Label(tab.title, systemImage: tab.icon)
+					}
 				}
 			}
 		}
