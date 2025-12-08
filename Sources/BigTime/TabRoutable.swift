@@ -38,3 +38,10 @@ where AllCases: RandomAccessCollection {
 	/// Unique identifier for the tab
 	var id: String { get }
 }
+
+// MARK: - Defaults
+extension TabRoutable {
+	#if canImport(SwiftUI)
+		public var localizedTitle: LocalizedStringKey? { nil }
+	#endif
+}
