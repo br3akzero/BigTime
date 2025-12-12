@@ -89,11 +89,26 @@ private struct HierarchicalSheetModifier<Route: Routable>: ViewModifier {
 	let stack: [SheetPresentation<Route>]
 	let level: Int
 	let onScreenView: ((String) -> Void)?
-	let router: Router<Route>
+	@Bindable var router: Router<Route>
+
+	private var isPresented: Binding<Bool> {
+		Binding(
+			get: { level < router.sheetStack.count },
+			set: { isPresented in
+				if !isPresented && level < router.sheetStack.count {
+					// Sheet was dismissed by user gesture
+					// Dismiss from the top down to this level
+					while router.sheetStack.count > level {
+						router.dismissSheet()
+					}
+				}
+			}
+		)
+	}
 
 	func body(content: Content) -> some View {
 		content
-			.sheet(isPresented: .constant(level < stack.count)) {
+			.sheet(isPresented: isPresented) {
 				if level < stack.count {
 					let presentation = stack[level]
 					NavigationStack {
@@ -106,19 +121,11 @@ private struct HierarchicalSheetModifier<Route: Routable>: ViewModifier {
 					.presentationDetents(presentation.detents ?? [.large])
 					.presentationDragIndicator(presentation.dragIndicator ?? .automatic)
 					.hierarchicalSheet(
-						stack: stack,
+						stack: router.sheetStack,
 						level: level + 1,
 						onScreenView: onScreenView,
 						router: router
 					)
-					.interactiveDismissDisabled(false)
-					.onDisappear {
-						// Handle dismissal when user swipes down to dismiss
-						// Only call if this is still the top sheet
-						if router.sheetStack.count > level {
-							router.dismissSheet()
-						}
-					}
 				}
 			}
 	}
