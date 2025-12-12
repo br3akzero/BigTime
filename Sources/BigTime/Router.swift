@@ -9,6 +9,14 @@
 import OSLog
 import SwiftUI
 
+/// Represents a single sheet presentation in the hierarchy
+public struct SheetPresentation<Route: Routable> {
+	let route: Route
+	let detents: Set<PresentationDetent>?
+	let dragIndicator: Visibility?
+	let onDismiss: (() -> Void)?
+}
+
 /// Generic router for managing navigation state
 /// Initialize with your custom Route type that conforms to Routable
 @MainActor
@@ -21,23 +29,34 @@ public final class Router<Route: Routable> {
 	/// The root route displayed when the stack is empty
 	public var rootRoute: Route
 
-	/// Currently presented sheet route
-	public var sheetRoute: Route?
+	/// Stack of presented sheets (supports hierarchical sheet presentation)
+	public var sheetStack: [SheetPresentation<Route>] = []
+
+	/// Currently presented sheet route (computed from sheetStack for backward compatibility)
+	public var sheetRoute: Route? {
+		sheetStack.last?.route
+	}
 
 	/// Currently presented full screen cover route
 	public var fullScreenCoverRoute: Route?
 
-	/// Callback invoked when sheet is dismissed
-	public var sheetDismissHandler: (() -> Void)?
+	/// Callback invoked when sheet is dismissed (computed from sheetStack for backward compatibility)
+	public var sheetDismissHandler: (() -> Void)? {
+		sheetStack.last?.onDismiss
+	}
 
 	/// Callback invoked when full screen cover is dismissed
 	public var fullScreenCoverDismissHandler: (() -> Void)?
 
-	/// Presentation detents for the sheet
-	public var sheetPresentationDetents: Set<PresentationDetent>?
+	/// Presentation detents for the sheet (computed from sheetStack for backward compatibility)
+	public var sheetPresentationDetents: Set<PresentationDetent>? {
+		sheetStack.last?.detents
+	}
 
-	/// Drag indicator visibility for the sheet
-	public var sheetPresentationDragIndicator: Visibility?
+	/// Drag indicator visibility for the sheet (computed from sheetStack for backward compatibility)
+	public var sheetPresentationDragIndicator: Visibility? {
+		sheetStack.last?.dragIndicator
+	}
 
 	// - Service
 	private let log: Logger
@@ -110,18 +129,54 @@ public final class Router<Route: Routable> {
 			// Wait for dismissal to complete
 			Task { @MainActor in
 				try? await Task.sleep(for: .milliseconds(350))
-				sheetRoute = route
-				sheetDismissHandler = onDismiss
-				sheetPresentationDetents = detents
-				sheetPresentationDragIndicator = dragIndicator
+				let presentation = SheetPresentation(
+					route: route,
+					detents: detents,
+					dragIndicator: dragIndicator,
+					onDismiss: onDismiss
+				)
+				sheetStack = [presentation]
 			}
 		} else {
 			// No conflicting modal, present immediately
-			sheetRoute = route
-			sheetDismissHandler = onDismiss
-			sheetPresentationDetents = detents
-			sheetPresentationDragIndicator = dragIndicator
+			let presentation = SheetPresentation(
+				route: route,
+				detents: detents,
+				dragIndicator: dragIndicator,
+				onDismiss: onDismiss
+			)
+			sheetStack = [presentation]
 		}
+	}
+
+	/// Presents a child sheet from within an already-presented sheet
+	/// This allows hierarchical sheet presentation (sheet presenting another sheet)
+	/// - Parameters:
+	///   - route: The route to present as a child sheet
+	///   - detents: Presentation detents for the child sheet
+	///   - dragIndicator: Drag indicator visibility for the child sheet
+	///   - onDismiss: Optional callback invoked when the child sheet is dismissed
+	public func childSheet(
+		_ route: Route,
+		detents: Set<PresentationDetent>? = nil,
+		dragIndicator: Visibility? = nil,
+		onDismiss: (() -> Void)? = nil
+	) {
+		guard !sheetStack.isEmpty else {
+			log.warning("Attempted to present child sheet without a parent sheet. Use sheet() instead.")
+			sheet(route, detents: detents, dragIndicator: dragIndicator, onDismiss: onDismiss)
+			return
+		}
+
+		log.debug("Presenting child sheet for \(route) (parent: \(self.sheetStack.last?.route.description ?? "unknown"))")
+
+		let presentation = SheetPresentation(
+			route: route,
+			detents: detents,
+			dragIndicator: dragIndicator,
+			onDismiss: onDismiss
+		)
+		sheetStack.append(presentation)
 	}
 
 	/// Presents a route as a full screen cover
@@ -135,11 +190,9 @@ public final class Router<Route: Routable> {
 		log.debug("Full screen cover route pushed \(route).")
 
 		// Dismiss any active sheet first
-		if sheetRoute != nil {
-			log.debug("Dismissing active sheet before presenting full screen cover")
-			sheetRoute = nil
-			sheetDismissHandler?()
-			sheetDismissHandler = nil
+		if !sheetStack.isEmpty {
+			log.debug("Dismissing active sheet(s) before presenting full screen cover")
+			dismissAllSheets()
 
 			// Wait for dismissal to complete
 			Task { @MainActor in
@@ -155,16 +208,34 @@ public final class Router<Route: Routable> {
 	}
 
 	/// Dismisses the currently presented sheet
+	/// If there are child sheets, dismisses the topmost child and returns to its parent
+	/// If there's only one sheet, dismisses it entirely
 	public func dismissSheet() {
-		guard sheetRoute != nil else { return }
+		guard !sheetStack.isEmpty else { return }
 
-		log.debug("Dismiss top most sheet.")
+		let dismissedSheet = sheetStack.removeLast()
 
-		sheetRoute = nil
-		sheetDismissHandler?()
-		sheetDismissHandler = nil
-		sheetPresentationDetents = nil
-		sheetPresentationDragIndicator = nil
+		if sheetStack.isEmpty {
+			log.debug("Dismissing sheet: \(dismissedSheet.route.description)")
+		} else {
+			log.debug("Dismissing child sheet: \(dismissedSheet.route.description), returning to parent: \(self.sheetStack.last?.route.description ?? "unknown")")
+		}
+
+		dismissedSheet.onDismiss?()
+	}
+
+	/// Dismisses all sheets in the hierarchy
+	public func dismissAllSheets() {
+		guard !sheetStack.isEmpty else { return }
+
+		log.debug("Dismissing all \(self.sheetStack.count) sheet(s)")
+
+		// Call dismiss handlers in reverse order (from child to parent)
+		for presentation in sheetStack.reversed() {
+			presentation.onDismiss?()
+		}
+
+		sheetStack.removeAll()
 	}
 
 	/// Dismisses the currently presented full screen cover

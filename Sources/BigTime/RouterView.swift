@@ -59,20 +59,12 @@ public struct RouterView<Route: Routable>: View {
 				}
 		}
 		.environment(router)
-		.sheet(
-			item: $router.sheetRoute,
-			onDismiss: router.sheetDismissHandler
-		) { route in
-			NavigationStack {
-				route
-					.environment(router)
-					.onAppear {
-						onScreenView?(route.description)
-					}
-			}
-			.presentationDetents(router.sheetPresentationDetents ?? [.large])
-			.presentationDragIndicator(router.sheetPresentationDragIndicator ?? .automatic)
-		}
+		.hierarchicalSheet(
+			stack: router.sheetStack,
+			level: 0,
+			onScreenView: onScreenView,
+			router: router
+		)
 		#if !os(macOS)
 			.fullScreenCover(
 				item: $router.fullScreenCoverRoute,
@@ -87,5 +79,64 @@ public struct RouterView<Route: Routable>: View {
 				}
 			}
 		#endif
+	}
+}
+
+// MARK: - Hierarchical Sheet Support
+
+/// Internal view modifier that handles hierarchical sheet presentation
+private struct HierarchicalSheetModifier<Route: Routable>: ViewModifier {
+	let stack: [SheetPresentation<Route>]
+	let level: Int
+	let onScreenView: ((String) -> Void)?
+	let router: Router<Route>
+
+	func body(content: Content) -> some View {
+		content
+			.sheet(isPresented: .constant(level < stack.count)) {
+				if level < stack.count {
+					let presentation = stack[level]
+					NavigationStack {
+						presentation.route
+							.environment(router)
+							.onAppear {
+								onScreenView?(presentation.route.description)
+							}
+					}
+					.presentationDetents(presentation.detents ?? [.large])
+					.presentationDragIndicator(presentation.dragIndicator ?? .automatic)
+					.hierarchicalSheet(
+						stack: stack,
+						level: level + 1,
+						onScreenView: onScreenView,
+						router: router
+					)
+					.interactiveDismissDisabled(false)
+					.onDisappear {
+						// Handle dismissal when user swipes down to dismiss
+						// Only call if this is still the top sheet
+						if router.sheetStack.count > level {
+							router.dismissSheet()
+						}
+					}
+				}
+			}
+	}
+}
+
+extension View {
+	/// Applies hierarchical sheet presentation to a view
+	fileprivate func hierarchicalSheet<Route: Routable>(
+		stack: [SheetPresentation<Route>],
+		level: Int,
+		onScreenView: ((String) -> Void)?,
+		router: Router<Route>
+	) -> some View {
+		modifier(HierarchicalSheetModifier(
+			stack: stack,
+			level: level,
+			onScreenView: onScreenView,
+			router: router
+		))
 	}
 }
