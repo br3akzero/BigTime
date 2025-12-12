@@ -59,7 +59,7 @@ public final class Router<Route: Routable> {
 	/// Pushes a route onto the navigation stack
 	/// - Parameter route: The route to push
 	public func push(_ route: Route) {
-		log.debug("Push route \(route):\(route.id).")
+		log.debug("Push route \(route).")
 		routes.append(route)
 	}
 
@@ -79,7 +79,7 @@ public final class Router<Route: Routable> {
 	/// Switches the root route and clears the navigation stack
 	/// - Parameter root: The new root route
 	public func switchRoot(_ root: Route) {
-		log.debug("Switching root route \(root.id)")
+		log.debug("Switching root route \(root.description)")
 		routes.removeAll()
 		rootRoute = root
 	}
@@ -98,7 +98,7 @@ public final class Router<Route: Routable> {
 		dragIndicator: Visibility? = nil,
 		onDismiss: (() -> Void)? = nil
 	) {
-		log.debug("Presenting sheet for \(route):\(route.id)")
+		log.debug("Presenting sheet for \(route)")
 
 		// Dismiss any active full screen cover first
 		if fullScreenCoverRoute != nil {
@@ -132,7 +132,7 @@ public final class Router<Route: Routable> {
 		_ route: Route,
 		onDismiss: (() -> Void)? = nil
 	) {
-		log.debug("Full screen cover route pushed \(route):\(route.id).")
+		log.debug("Full screen cover route pushed \(route).")
 
 		// Dismiss any active sheet first
 		if sheetRoute != nil {

@@ -12,9 +12,6 @@ import SwiftUI
 /// Your Route enum should conform to this protocol
 @MainActor
 public protocol Routable: Hashable, Identifiable, CustomStringConvertible, View {
-	/// Unique identifier for the route
-	var id: UUID { get }
-
 	/// Human-readable description for logging
 	var description: String { get }
 }
