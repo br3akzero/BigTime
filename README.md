@@ -9,6 +9,7 @@ BigTime is a reusable Swift Package that provides a robust navigation system for
 - ✅ **Type-safe routing** using protocol-based enums
 - ✅ **Push navigation** with NavigationStack
 - ✅ **Sheet presentations** with customizable detents and drag indicators
+- ✅ **Hierarchical sheets** - sheets can present child sheets with parent-child tracking
 - ✅ **Full-screen covers** for immersive experiences
 - ✅ **Tab-based navigation** with isolated stacks per tab
 - ✅ **Screen view tracking** with optional callbacks
@@ -300,6 +301,55 @@ let router = Router(
 )
 ```
 
+### Hierarchical Sheet Presentation
+
+Present sheets from within sheets with automatic parent-child tracking. Simply use `sheet()` everywhere - the framework automatically detects if you're already in a sheet and creates a hierarchical presentation:
+
+```swift
+struct SettingsSheet: View {
+    @Environment(Router<Route>.self) private var router
+
+    var body: some View {
+        VStack {
+            Button("Show Privacy Settings") {
+                // Just use sheet() - it automatically becomes a child sheet
+                router.sheet(.privacySettings)
+            }
+
+            Button("Show Appearance Settings") {
+                router.sheet(
+                    .appearanceSettings,
+                    detents: [.medium],
+                    dragIndicator: .visible
+                )
+            }
+        }
+    }
+}
+
+// Present the parent sheet
+router.sheet(.settings)
+
+// From within the settings sheet, present another sheet
+// It automatically becomes a child sheet
+router.sheet(.privacySettings)
+
+// Dismiss the child sheet (returns to parent)
+router.dismissSheet()
+
+// Dismiss all sheets in the hierarchy at once
+router.dismissAllSheets()
+```
+
+**Key Points:**
+- Use `sheet()` everywhere - it automatically detects hierarchical presentation
+- If called when no sheet is present, it creates a new root sheet
+- If called from within an existing sheet, it creates a child sheet
+- Each child maintains its own detents, drag indicators, and dismiss handlers
+- `dismissSheet()` dismisses the topmost sheet and returns to its parent
+- `dismissAllSheets()` dismisses the entire sheet hierarchy
+- All dismiss handlers are called in reverse order (child to parent)
+
 ## API Reference
 
 ### Protocols
@@ -329,7 +379,8 @@ Observable router managing navigation state:
 **Properties:**
 - `routes: [Route]` - Navigation stack
 - `rootRoute: Route` - Base route
-- `sheetRoute: Route?` - Current sheet
+- `sheetStack: [SheetPresentation<Route>]` - Stack of presented sheets (supports hierarchy)
+- `sheetRoute: Route?` - Current sheet (computed from sheetStack)
 - `fullScreenCoverRoute: Route?` - Current cover
 
 **Methods:**
@@ -337,10 +388,20 @@ Observable router managing navigation state:
 - `pop()` - Pop from stack
 - `popToRoot()` - Clear stack
 - `switchRoot(_ root: Route)` - Change root route
-- `sheet(_ route: Route, detents:dragIndicator:onDismiss:)` - Present sheet
+- `sheet(_ route: Route, detents:dragIndicator:onDismiss:)` - Present sheet (auto-detects hierarchical presentation)
 - `fullScreenCover(_ route: Route, onDismiss:)` - Present cover
-- `dismissSheet()` - Dismiss sheet
+- `dismissSheet()` - Dismiss topmost sheet (returns to parent if hierarchy exists)
+- `dismissAllSheets()` - Dismiss all sheets in the hierarchy
 - `dismissFullScreenCover()` - Dismiss cover
+
+#### `SheetPresentation<Route: Routable>`
+Represents a single sheet in the presentation hierarchy:
+
+**Properties:**
+- `route: Route` - The route being presented
+- `detents: Set<PresentationDetent>?` - Presentation detents
+- `dragIndicator: Visibility?` - Drag indicator visibility
+- `onDismiss: (() -> Void)?` - Dismiss callback
 
 #### `TabRouter<TabRoute: TabRoutable>`
 Observable router managing tab navigation:

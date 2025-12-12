@@ -106,6 +106,8 @@ public final class Router<Route: Routable> {
 	// MARK: - Modal Presentation
 
 	/// Presents a route as a sheet
+	/// Automatically handles hierarchical presentation - if called from within an existing sheet,
+	/// it presents as a child sheet. Otherwise, it presents as a new root sheet.
 	/// - Parameters:
 	///   - route: The route to present
 	///   - detents: Presentation detents for the sheet
@@ -117,9 +119,14 @@ public final class Router<Route: Routable> {
 		dragIndicator: Visibility? = nil,
 		onDismiss: (() -> Void)? = nil
 	) {
-		log.debug("Presenting sheet for \(route)")
+		let presentation = SheetPresentation(
+			route: route,
+			detents: detents,
+			dragIndicator: dragIndicator,
+			onDismiss: onDismiss
+		)
 
-		// Dismiss any active full screen cover first
+		// Check if we need to dismiss a full screen cover first
 		if fullScreenCoverRoute != nil {
 			log.debug("Dismissing active full screen cover before presenting sheet")
 			fullScreenCoverRoute = nil
@@ -129,54 +136,24 @@ public final class Router<Route: Routable> {
 			// Wait for dismissal to complete
 			Task { @MainActor in
 				try? await Task.sleep(for: .milliseconds(350))
-				let presentation = SheetPresentation(
-					route: route,
-					detents: detents,
-					dragIndicator: dragIndicator,
-					onDismiss: onDismiss
-				)
-				sheetStack = [presentation]
+				self.presentSheet(presentation)
 			}
 		} else {
-			// No conflicting modal, present immediately
-			let presentation = SheetPresentation(
-				route: route,
-				detents: detents,
-				dragIndicator: dragIndicator,
-				onDismiss: onDismiss
-			)
-			sheetStack = [presentation]
+			presentSheet(presentation)
 		}
 	}
 
-	/// Presents a child sheet from within an already-presented sheet
-	/// This allows hierarchical sheet presentation (sheet presenting another sheet)
-	/// - Parameters:
-	///   - route: The route to present as a child sheet
-	///   - detents: Presentation detents for the child sheet
-	///   - dragIndicator: Drag indicator visibility for the child sheet
-	///   - onDismiss: Optional callback invoked when the child sheet is dismissed
-	public func childSheet(
-		_ route: Route,
-		detents: Set<PresentationDetent>? = nil,
-		dragIndicator: Visibility? = nil,
-		onDismiss: (() -> Void)? = nil
-	) {
-		guard !sheetStack.isEmpty else {
-			log.warning("Attempted to present child sheet without a parent sheet. Use sheet() instead.")
-			sheet(route, detents: detents, dragIndicator: dragIndicator, onDismiss: onDismiss)
-			return
+	/// Internal method that handles the actual sheet presentation logic
+	private func presentSheet(_ presentation: SheetPresentation<Route>) {
+		// If there's already a sheet stack, this is a child sheet
+		if !sheetStack.isEmpty {
+			log.debug("Presenting child sheet for \(presentation.route) (parent: \(self.sheetStack.last?.route.description ?? "unknown"))")
+			sheetStack.append(presentation)
+		} else {
+			// This is a new root sheet
+			log.debug("Presenting sheet for \(presentation.route)")
+			sheetStack = [presentation]
 		}
-
-		log.debug("Presenting child sheet for \(route) (parent: \(self.sheetStack.last?.route.description ?? "unknown"))")
-
-		let presentation = SheetPresentation(
-			route: route,
-			detents: detents,
-			dragIndicator: dragIndicator,
-			onDismiss: onDismiss
-		)
-		sheetStack.append(presentation)
 	}
 
 	/// Presents a route as a full screen cover

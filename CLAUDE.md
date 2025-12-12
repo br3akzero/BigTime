@@ -73,13 +73,15 @@ The framework is built around two primary router types and their corresponding p
 
 1. **Environment-based access** - Routers are injected via SwiftUI Environment, accessed with `@Environment(Router<Route>.self)` or `@Environment(TabRouter<TabRoute>.self)`
 
-2. **Modal conflict resolution** - Router prevents presenting sheet + fullScreenCover simultaneously by dismissing one before showing the other (Router.swift:104-124, 138-154)
+2. **Modal conflict resolution** - Router prevents presenting sheet + fullScreenCover simultaneously by dismissing one before showing the other
 
 3. **Route-as-View** - Routes ARE Views; the enum body renders the appropriate screen. No separate view mapping needed.
 
 4. **Logging with OSLog** - Both routers use structured logging with customizable subsystem identifiers
 
 5. **Dismiss handlers** - Optional callbacks execute after modal dismissal (e.g., refresh data after settings closed)
+
+6. **Automatic hierarchical sheets** - The `sheet()` method automatically detects if it's called from within an existing sheet and creates a child sheet. No need for separate `childSheet()` method. Uses a `sheetStack: [SheetPresentation<Route>]` internally to track the hierarchy (Router.swift:147-157).
 
 ## Important Constraints
 
@@ -91,6 +93,18 @@ The framework is built around two primary router types and their corresponding p
 
 - **Minimum platform versions**: iOS 17, macOS 14, watchOS 11, tvOS 17, visionOS 1 (as defined in Package.swift:8-13)
 
+## Hierarchical Sheet Presentation
+
+The framework supports presenting sheets from within sheets (child sheets) with automatic detection:
+
+- Call `router.sheet()` anywhere - it automatically detects context
+- If no sheet is currently presented, creates a new root sheet
+- If called from within a sheet, appends to the `sheetStack` as a child
+- `dismissSheet()` pops from the stack (returns to parent if hierarchy exists)
+- `dismissAllSheets()` clears entire stack and invokes all dismiss handlers in reverse order
+- Each sheet in the hierarchy can have its own detents, drag indicators, and dismiss handlers
+- RouterView uses recursive `HierarchicalSheetModifier` to present each level (RouterView.swift:88-124)
+
 ## Testing
 
 Tests use Swift Testing framework (`import Testing`). Current test coverage is minimal (see Tests/BigTimeTests/BigTimeTests.swift:4-6).
@@ -98,5 +112,6 @@ Tests use Swift Testing framework (`import Testing`). Current test coverage is m
 When adding tests, focus on:
 - Router navigation stack manipulation (push/pop/popToRoot/switchRoot)
 - Modal presentation state management and conflict resolution
+- Hierarchical sheet presentation and dismissal
 - TabRouter tab switching and stack isolation
 - Dismiss handler invocation
