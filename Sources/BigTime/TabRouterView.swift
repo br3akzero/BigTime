@@ -77,5 +77,6 @@ public struct TabRouterView<TabRoute: TabRoutable>: View {
 			}
 		}
 		.environment(tabRouter)
+		.environment(tabRouter.currentRouter)
 	}
 }
