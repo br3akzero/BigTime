@@ -23,6 +23,11 @@ router.fullScreenCover(.onboarding)                        // Full screen (iOS o
 router.dismissSheet()                                      // Dismiss current sheet
 router.dismissAllSheets()                                  // Dismiss entire sheet stack
 router.dismissFullScreenCover()                            // Dismiss full screen cover
+
+// Universal overlay (persistent view above content, below modals)
+router.universalOverlay(.miniPlayer(station))              // Present overlay
+router.dismissUniversalOverlay()                           // Dismiss overlay
+router.hasUniversalOverlay                                 // Check if overlay active
 ```
 
 ## Step 1: Define Your Routes
@@ -334,6 +339,118 @@ router.dismissFullScreenCover()
 
 Note: `fullScreenCover` is not available on macOS. The framework uses conditional compilation and falls back to sheets.
 
+## Universal Overlay
+
+Present persistent views that float above navigation content but below modals. Common use cases include mini-players, floating action buttons, or persistent banners.
+
+### Basic Usage
+
+```swift
+// Present overlay
+router.universalOverlay(.miniPlayer(station))
+
+// Present with custom animation
+router.universalOverlay(.floatingButton, animation: .spring())
+
+// Dismiss overlay
+router.dismissUniversalOverlay()
+
+// Check if overlay is active
+if router.hasUniversalOverlay {
+    // Adjust layout padding
+}
+```
+
+### Example: Mini Player Overlay
+
+```swift
+@MainActor
+enum AppRoute: Routable {
+    case home
+    case stationList
+    case miniPlayer(station: Station)  // Used for overlay
+
+    var id: String {
+        switch self {
+        case .home: "home"
+        case .stationList: "station-list"
+        case .miniPlayer(let station): "mini-player-\(station.id)"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .home: "Home"
+        case .stationList: "Station List"
+        case .miniPlayer(let station): "Mini Player: \(station.name)"
+        }
+    }
+
+    var body: some View {
+        switch self {
+        case .home: HomeView()
+        case .stationList: StationListView()
+        case .miniPlayer(let station): MiniPlayerView(station: station)
+        }
+    }
+}
+
+struct StationListView: View {
+    @Environment(Router<AppRoute>.self) var router
+
+    var body: some View {
+        List(stations) { station in
+            Button(station.name) {
+                router.universalOverlay(.miniPlayer(station: station))
+            }
+        }
+    }
+}
+
+struct MiniPlayerView: View {
+    @Environment(Router<AppRoute>.self) var router
+    let station: Station
+
+    var body: some View {
+        HStack {
+            Text(station.name)
+            Spacer()
+            Button("Close") {
+                router.dismissUniversalOverlay()
+            }
+        }
+        .frame(height: 64)
+        .background(.ultraThinMaterial)
+    }
+}
+```
+
+### Layer Order
+
+Overlays appear in this order (bottom to top):
+1. Navigation content (NavigationStack/TabView)
+2. **Universal Overlay**
+3. Sheets
+4. Full Screen Cover
+
+### TabRouterView Integration
+
+When using `TabRouterView`, the overlay automatically renders above the tab bar. Each tab's router can present its own overlay, and the current tab's overlay is displayed.
+
+```swift
+struct ContentView: View {
+    @Environment(Router<AppRoute>.self) var router
+
+    var body: some View {
+        ScrollView {
+            // Content...
+        }
+        // Add bottom padding when overlay is visible
+        .safeAreaPadding(.bottom, router.hasUniversalOverlay ? 80 : 0)
+    }
+}
+```
+
 ## Critical Constraints
 
 ### 1. @MainActor Requirement
@@ -574,4 +691,5 @@ struct MyApp: App {
 5. Use `push()`, `pop()`, `popToRoot()`, `switchRoot()` for stack navigation
 6. Use `sheet()`, `fullScreenCover()` for modal presentation
 7. Sheets automatically support hierarchy - just call `sheet()` from within a sheet
-8. For tabs, use `TabRoutable` + `TabRouterView`
+8. Use `universalOverlay()` for persistent overlays (mini-players, FABs)
+9. For tabs, use `TabRoutable` + `TabRouterView`

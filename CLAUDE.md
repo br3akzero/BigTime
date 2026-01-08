@@ -83,6 +83,8 @@ The framework is built around two primary router types and their corresponding p
 
 6. **Automatic hierarchical sheets** - The `sheet()` method automatically detects if it's called from within an existing sheet and creates a child sheet. No need for separate `childSheet()` method. Uses a `sheetStack: [SheetPresentation<Route>]` internally to track the hierarchy (Router.swift:147-157).
 
+7. **Universal overlay** - Persistent overlay views that float above navigation content but below modals. Accessed via `router.universalOverlay()`. TabRouterView renders the current tab's overlay above the tab bar.
+
 ## Important Constraints
 
 - **@MainActor requirement**: Both `Routable` and `TabRoutable` protocols require `@MainActor`. All Route and TabRoute enums MUST be marked `@MainActor`.
@@ -104,6 +106,30 @@ The framework supports presenting sheets from within sheets (child sheets) with 
 - `dismissAllSheets()` clears entire stack and invokes all dismiss handlers in reverse order
 - Each sheet in the hierarchy can have its own detents, drag indicators, and dismiss handlers
 - RouterView uses recursive `HierarchicalSheetModifier` to present each level (RouterView.swift:88-124)
+
+## Universal Overlay
+
+The framework supports persistent overlay views that float above navigation content but below modal presentations (sheets/covers). Common use cases include mini-players, floating action buttons, or persistent banners.
+
+**Router API:**
+- `universalOverlayRoute: Route?` - The currently displayed overlay route
+- `universalOverlay(_:animation:)` - Present an overlay with optional animation
+- `dismissUniversalOverlay(animation:)` - Dismiss the overlay with optional animation
+- `hasUniversalOverlay: Bool` - Check if an overlay is currently presented
+
+**View Modifier:**
+- `disableUniversalOverlay()` - Disables overlay rendering in a view hierarchy (used internally by TabRouterView)
+
+**Layer Order:**
+1. NavigationStack / TabView (base content)
+2. Universal Overlay (ZStack layer)
+3. Sheets (above overlay)
+4. Full Screen Cover (top layer)
+
+**TabRouterView Integration:**
+- TabRouterView uses `.disableUniversalOverlay()` on child RouterViews
+- Renders `currentRouter.universalOverlayRoute` above the TabView and tab bar
+- Each tab's router can present its own overlay; the current tab's overlay is displayed
 
 ## Testing
 
