@@ -50,20 +50,30 @@ public struct TabRouterView<TabRoute: TabRoutable>: View {
 
 	// - Render
 	public var body: some View {
-		TabView(selection: $tabRouter.selectedTab) {
-			ForEach(TabRoute.allCases, id: \.id) { tab in
-				RouterView(
-					router: tabRouter.router(for: tab),
-					onScreenView: onScreenView
-				)
-				.tag(tab)
-				.tabItem {
-					if let localizedTitle = tab.localizedTitle {
-						Label(localizedTitle, systemImage: tab.icon)
-					} else {
-						Label(tab.title, systemImage: tab.icon)
+		ZStack(alignment: .bottom) {
+			TabView(selection: $tabRouter.selectedTab) {
+				ForEach(TabRoute.allCases, id: \.id) { tab in
+					RouterView(
+						router: tabRouter.router(for: tab),
+						onScreenView: onScreenView
+					)
+					.disableUniversalOverlay()
+					.tag(tab)
+					.tabItem {
+						if let localizedTitle = tab.localizedTitle {
+							Label(localizedTitle, systemImage: tab.icon)
+						} else {
+							Label(tab.title, systemImage: tab.icon)
+						}
 					}
 				}
+			}
+
+			// Universal overlay from current tab's router (renders above TabView & tab bar)
+			if let overlayRoute = tabRouter.currentRouter.universalOverlayRoute {
+				overlayRoute
+					.transition(.move(edge: .bottom).combined(with: .opacity))
+					.zIndex(1)
 			}
 		}
 		.environment(tabRouter)

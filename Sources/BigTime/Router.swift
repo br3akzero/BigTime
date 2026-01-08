@@ -40,6 +40,9 @@ public final class Router<Route: Routable> {
 	/// Currently presented full screen cover route
 	public var fullScreenCoverRoute: Route?
 
+	/// Currently displayed universal overlay route
+	public var universalOverlayRoute: Route?
+
 	/// Callback invoked when sheet is dismissed (computed from sheetStack for backward compatibility)
 	public var sheetDismissHandler: (() -> Void)? {
 		sheetStack.last?.onDismiss
@@ -223,5 +226,33 @@ public final class Router<Route: Routable> {
 		fullScreenCoverRoute = nil
 		fullScreenCoverDismissHandler?()
 		fullScreenCoverDismissHandler = nil
+	}
+
+	// MARK: - Universal Overlay
+
+	/// Present a universal overlay that persists above navigation content
+	/// - Parameters:
+	///   - route: The route to display as overlay
+	///   - animation: Optional animation for the presentation
+	public func universalOverlay(_ route: Route, animation: Animation? = .default) {
+		log.debug("Universal overlay presented: \(route.description)")
+		withAnimation(animation) {
+			universalOverlayRoute = route
+		}
+	}
+
+	/// Dismiss the current universal overlay
+	/// - Parameter animation: Optional animation for the dismissal
+	public func dismissUniversalOverlay(animation: Animation? = .default) {
+		guard universalOverlayRoute != nil else { return }
+		log.debug("Universal overlay dismissed")
+		withAnimation(animation) {
+			universalOverlayRoute = nil
+		}
+	}
+
+	/// Check if a universal overlay is currently presented
+	public var hasUniversalOverlay: Bool {
+		universalOverlayRoute != nil
 	}
 }

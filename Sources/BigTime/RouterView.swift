@@ -19,6 +19,9 @@ public struct RouterView<Route: Routable>: View {
 	/// Called with the route's description whenever a new screen is displayed
 	public var onScreenView: ((String) -> Void)?
 
+	@Environment(\.universalOverlayDisabled)
+	private var universalOverlayDisabled
+
 	// - Init
 	/// Creates a RouterView with an existing router
 	/// - Parameters:
@@ -48,15 +51,24 @@ public struct RouterView<Route: Routable>: View {
 
 	// - Render
 	public var body: some View {
-		NavigationStack(path: $router.routes) {
-			router
-				.rootRoute
-				.navigationDestination(for: Route.self) { screen in
-					screen
-						.onAppear {
-							onScreenView?(screen.description)
-						}
-				}
+		ZStack(alignment: .bottom) {
+			NavigationStack(path: $router.routes) {
+				router
+					.rootRoute
+					.navigationDestination(for: Route.self) { screen in
+						screen
+							.onAppear {
+								onScreenView?(screen.description)
+							}
+					}
+			}
+
+			// Universal overlay layer (disabled when used inside TabRouterView)
+			if !universalOverlayDisabled, let overlayRoute = router.universalOverlayRoute {
+				overlayRoute
+					.transition(.move(edge: .bottom).combined(with: .opacity))
+					.zIndex(1)
+			}
 		}
 		.environment(router)
 		.hierarchicalSheet(
