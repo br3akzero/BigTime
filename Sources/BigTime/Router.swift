@@ -51,6 +51,10 @@ public final class Router<Route: Routable> {
 	/// Callback invoked when full screen cover is dismissed
 	public var fullScreenCoverDismissHandler: (() -> Void)?
 
+	/// Callback invoked when overlay is about to be presented
+	/// Used by TabRouter to dismiss its own overlay for mutual exclusion
+	internal var onOverlayPresenting: (() -> Void)?
+
 	/// Presentation detents for the sheet (computed from sheetStack for backward compatibility)
 	public var sheetPresentationDetents: Set<PresentationDetent>? {
 		sheetStack.last?.detents
@@ -235,6 +239,7 @@ public final class Router<Route: Routable> {
 	///   - route: The route to display as overlay
 	///   - animation: Optional animation for the presentation
 	public func universalOverlay(_ route: Route, animation: Animation? = .default) {
+		onOverlayPresenting?()
 		log.debug("Universal overlay presented: \(route.description)")
 		withAnimation(animation) {
 			universalOverlayRoute = route
