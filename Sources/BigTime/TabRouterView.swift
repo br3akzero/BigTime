@@ -69,8 +69,12 @@ public struct TabRouterView<TabRoute: TabRoutable>: View {
 				}
 			}
 
-			// Universal overlay from current tab's router (renders above TabView & tab bar)
-			if let overlayRoute = tabRouter.currentRouter.universalOverlayRoute {
+			// Universal overlay - prefer TabRouter level, fallback to current router's
+			if let overlayRoute = tabRouter.universalOverlayRoute {
+				overlayRoute
+					.transition(.move(edge: .bottom).combined(with: .opacity))
+					.zIndex(1)
+			} else if let overlayRoute = tabRouter.currentRouter.universalOverlayRoute {
 				overlayRoute
 					.transition(.move(edge: .bottom).combined(with: .opacity))
 					.zIndex(1)
