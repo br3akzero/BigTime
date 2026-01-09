@@ -39,6 +39,7 @@ The framework is built around two primary router types and their corresponding p
    - Creates independent Router instances for each tab
    - Maintains complete isolation between tab navigation stacks
    - Each tab has its own push/modal state
+   - Supports TabRouter-level universal overlay that persists across tab switches
 
 ### Protocol Architecture
 
@@ -111,8 +112,21 @@ The framework supports presenting sheets from within sheets (child sheets) with 
 
 The framework supports persistent overlay views that float above navigation content but below modal presentations (sheets/covers). Common use cases include mini-players, floating action buttons, or persistent banners.
 
+**Two Overlay Scopes:**
+1. **Router-level overlay** - Tied to a specific Router instance. In TabRouterView, dismissed when switching tabs.
+2. **TabRouter-level overlay** - Persists across tab switches. Use when overlay should remain visible regardless of selected tab.
+
+**Mutual Exclusion:** Only one overlay can be active at a time. Presenting a TabRouter overlay dismisses any Router overlay, and vice versa. This is enforced via `onOverlayPresenting` callback on Router (Router.swift:54-56).
+
 **Router API:**
 - `universalOverlayRoute: Route?` - The currently displayed overlay route
+- `universalOverlay(_:animation:)` - Present an overlay with optional animation
+- `dismissUniversalOverlay(animation:)` - Dismiss the overlay with optional animation
+- `hasUniversalOverlay: Bool` - Check if an overlay is currently presented
+- `onOverlayPresenting: (() -> Void)?` - Internal callback for mutual exclusion coordination
+
+**TabRouter API:**
+- `universalOverlayRoute: TabRoute.RouteType?` - The currently displayed overlay route (persists across tabs)
 - `universalOverlay(_:animation:)` - Present an overlay with optional animation
 - `dismissUniversalOverlay(animation:)` - Dismiss the overlay with optional animation
 - `hasUniversalOverlay: Bool` - Check if an overlay is currently presented
@@ -127,9 +141,9 @@ The framework supports persistent overlay views that float above navigation cont
 4. Full Screen Cover (top layer)
 
 **TabRouterView Integration:**
-- TabRouterView uses `.disableUniversalOverlay()` on child RouterViews
-- Renders `currentRouter.universalOverlayRoute` above the TabView and tab bar
-- Each tab's router can present its own overlay; the current tab's overlay is displayed
+- TabRouterView uses `.disableUniversalOverlay()` on child RouterViews to prevent duplicate overlay rendering
+- Prioritizes TabRouter's overlay, falls back to current router's overlay (TabRouterView.swift:72-81)
+- Overlays render above the TabView and tab bar
 
 ## Testing
 
@@ -141,3 +155,4 @@ When adding tests, focus on:
 - Hierarchical sheet presentation and dismissal
 - TabRouter tab switching and stack isolation
 - Dismiss handler invocation
+- Universal overlay mutual exclusion between Router and TabRouter

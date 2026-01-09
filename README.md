@@ -12,6 +12,7 @@ BigTime is a reusable Swift Package that provides a robust navigation system for
 - ✅ **Hierarchical sheets** - sheets can present child sheets with parent-child tracking
 - ✅ **Full-screen covers** for immersive experiences
 - ✅ **Tab-based navigation** with isolated stacks per tab
+- ✅ **Universal overlay** with Router-level and TabRouter-level support
 - ✅ **Screen view tracking** with optional callbacks
 - ✅ **Dismiss handlers** for post-navigation actions
 - ✅ **Built-in logging** using OSLog
@@ -350,6 +351,33 @@ router.dismissAllSheets()
 - `dismissAllSheets()` dismisses the entire sheet hierarchy
 - All dismiss handlers are called in reverse order (child to parent)
 
+### Universal Overlay
+
+Present persistent views that float above navigation content but below modals. Common use cases include mini-players, floating action buttons, or persistent banners.
+
+**Two overlay scopes:**
+
+1. **Router-level overlay** - For standalone `RouterView` usage. Tied to a specific router.
+2. **TabRouter-level overlay** - For `TabRouterView` usage. Persists across tab switches.
+
+```swift
+// Router-level overlay (dismissed when switching tabs)
+router.universalOverlay(.miniPlayer(station))
+router.dismissUniversalOverlay()
+
+// TabRouter-level overlay (persists across tabs)
+tabRouter.universalOverlay(.miniPlayer(station))
+tabRouter.dismissUniversalOverlay()
+```
+
+**Mutual exclusion:** Only one overlay can be active at a time. Presenting a TabRouter overlay automatically dismisses any Router overlay, and vice versa.
+
+**Layer order (bottom to top):**
+1. NavigationStack / TabView (base content)
+2. Universal Overlay
+3. Sheets
+4. Full Screen Cover
+
 ## API Reference
 
 ### Protocols
@@ -410,10 +438,14 @@ Observable router managing tab navigation:
 - `selectedTab: TabRoute` - Current tab
 - `routers: [TabRoute: Router<TabRoute.RouteType>]` - Per-tab routers
 - `currentRouter: Router<TabRoute.RouteType>` - Router for selected tab
+- `universalOverlayRoute: TabRoute.RouteType?` - Current overlay (persists across tabs)
+- `hasUniversalOverlay: Bool` - Check if overlay is presented
 
 **Methods:**
 - `router(for tab: TabRoute)` - Get router for specific tab
 - `switchTab(to tab: TabRoute)` - Switch to tab
+- `universalOverlay(_:animation:)` - Present persistent overlay
+- `dismissUniversalOverlay(animation:)` - Dismiss overlay
 
 ### Views
 

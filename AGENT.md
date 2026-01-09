@@ -25,9 +25,14 @@ router.dismissAllSheets()                                  // Dismiss entire she
 router.dismissFullScreenCover()                            // Dismiss full screen cover
 
 // Universal overlay (persistent view above content, below modals)
-router.universalOverlay(.miniPlayer(station))              // Present overlay
-router.dismissUniversalOverlay()                           // Dismiss overlay
+router.universalOverlay(.miniPlayer(station))              // Router-level overlay
+router.dismissUniversalOverlay()                           // Dismiss router overlay
 router.hasUniversalOverlay                                 // Check if overlay active
+
+// TabRouter-level overlay (persists across tab switches)
+tabRouter.universalOverlay(.miniPlayer(station))           // TabRouter-level overlay
+tabRouter.dismissUniversalOverlay()                        // Dismiss tabRouter overlay
+tabRouter.hasUniversalOverlay                              // Check if overlay active
 ```
 
 ## Step 1: Define Your Routes
@@ -343,20 +348,32 @@ Note: `fullScreenCover` is not available on macOS. The framework uses conditiona
 
 Present persistent views that float above navigation content but below modals. Common use cases include mini-players, floating action buttons, or persistent banners.
 
+### Two Overlay Scopes
+
+1. **Router-level overlay** - For standalone `RouterView` usage. Tied to a specific router.
+2. **TabRouter-level overlay** - For `TabRouterView` usage. Persists across tab switches.
+
+**Mutual exclusion:** Only one overlay can be active at a time. Presenting a TabRouter overlay automatically dismisses any Router overlay, and vice versa.
+
 ### Basic Usage
 
 ```swift
-// Present overlay
+// Router-level overlay (dismissed when switching tabs)
 router.universalOverlay(.miniPlayer(station))
+router.dismissUniversalOverlay()
+
+// TabRouter-level overlay (persists across tabs)
+tabRouter.universalOverlay(.miniPlayer(station))
+tabRouter.dismissUniversalOverlay()
 
 // Present with custom animation
 router.universalOverlay(.floatingButton, animation: .spring())
 
-// Dismiss overlay
-router.dismissUniversalOverlay()
-
 // Check if overlay is active
 if router.hasUniversalOverlay {
+    // Adjust layout padding
+}
+if tabRouter.hasUniversalOverlay {
     // Adjust layout padding
 }
 ```
@@ -435,20 +452,24 @@ Overlays appear in this order (bottom to top):
 
 ### TabRouterView Integration
 
-When using `TabRouterView`, the overlay automatically renders above the tab bar. Each tab's router can present its own overlay, and the current tab's overlay is displayed.
+When using `TabRouterView`, overlays render above the tab bar. Use `tabRouter.universalOverlay()` for overlays that should persist across tab switches.
 
 ```swift
 struct ContentView: View {
     @Environment(Router<AppRoute>.self) var router
+    @Environment(TabRouter<AppTab>.self) var tabRouter
 
     var body: some View {
         ScrollView {
             // Content...
         }
         // Add bottom padding when overlay is visible
-        .safeAreaPadding(.bottom, router.hasUniversalOverlay ? 80 : 0)
+        .safeAreaPadding(.bottom, (router.hasUniversalOverlay || tabRouter.hasUniversalOverlay) ? 80 : 0)
     }
 }
+
+// Present overlay that persists across tabs
+tabRouter.universalOverlay(.miniPlayer(station))
 ```
 
 ## Critical Constraints
@@ -691,5 +712,6 @@ struct MyApp: App {
 5. Use `push()`, `pop()`, `popToRoot()`, `switchRoot()` for stack navigation
 6. Use `sheet()`, `fullScreenCover()` for modal presentation
 7. Sheets automatically support hierarchy - just call `sheet()` from within a sheet
-8. Use `universalOverlay()` for persistent overlays (mini-players, FABs)
-9. For tabs, use `TabRoutable` + `TabRouterView`
+8. Use `router.universalOverlay()` for overlays tied to a router
+9. Use `tabRouter.universalOverlay()` for overlays that persist across tabs
+10. For tabs, use `TabRoutable` + `TabRouterView`
