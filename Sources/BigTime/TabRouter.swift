@@ -21,6 +21,9 @@ public final class TabRouter<TabRoute: TabRoutable> {
 	/// Independent routers for each tab
 	public private(set) var routers: [TabRoute: Router<TabRoute.RouteType>]
 
+	/// Currently displayed universal overlay route (persists across tab switches)
+	public var universalOverlayRoute: TabRoute.RouteType?
+
 	// - Service
 	private let log: Logger
 
@@ -42,7 +45,11 @@ public final class TabRouter<TabRoute: TabRoutable> {
 		// Initialize a Router for each tab
 		self.routers = [:]
 		for tab in TabRoute.allCases {
-			self.routers[tab] = Router(root: tab.rootRoute, subsystem: subsystemID)
+			let router = Router(root: tab.rootRoute, subsystem: subsystemID)
+			router.onOverlayPresenting = { [weak self] in
+				self?.dismissUniversalOverlay()
+			}
+			self.routers[tab] = router
 		}
 
 		log.debug("TabRouter initialized with \(TabRoute.allCases.count) tabs")
@@ -77,5 +84,41 @@ public final class TabRouter<TabRoute: TabRoutable> {
 
 		log.debug("Switching from \(self.selectedTab) to \(tab)")
 		selectedTab = tab
+	}
+
+	// MARK: - Universal Overlay
+
+	/// Present a universal overlay that persists across tab switches
+	/// - Parameters:
+	///   - route: The route to display as overlay
+	///   - animation: Optional animation for the presentation
+	public func universalOverlay(_ route: TabRoute.RouteType, animation: Animation? = .default) {
+		log.debug("TabRouter universal overlay presented: \(route.description)")
+
+		// Dismiss any router-level overlays for mutual exclusion
+		for router in routers.values {
+			if router.hasUniversalOverlay {
+				router.dismissUniversalOverlay(animation: animation)
+			}
+		}
+
+		withAnimation(animation) {
+			universalOverlayRoute = route
+		}
+	}
+
+	/// Dismiss the current universal overlay
+	/// - Parameter animation: Optional animation for the dismissal
+	public func dismissUniversalOverlay(animation: Animation? = .default) {
+		guard universalOverlayRoute != nil else { return }
+		log.debug("TabRouter universal overlay dismissed")
+		withAnimation(animation) {
+			universalOverlayRoute = nil
+		}
+	}
+
+	/// Check if a universal overlay is currently presented at TabRouter level
+	public var hasUniversalOverlay: Bool {
+		universalOverlayRoute != nil
 	}
 }
