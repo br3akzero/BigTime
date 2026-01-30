@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-BigTime is a type-safe, protocol-driven navigation framework for SwiftUI applications. It provides a reusable routing system supporting push navigation, sheet presentations, full-screen covers, and tab-based navigation with independent stacks per tab.
+BigTime is a type-safe, protocol-driven navigation library for SwiftUI applications. It provides a reusable routing system supporting push navigation, sheet presentations, full-screen covers, and tab-based navigation with independent stacks per tab.
 
 ## Build and Test Commands
 
@@ -26,7 +26,7 @@ swift package generate-documentation --target BigTime
 
 ### Core Components
 
-The framework is built around two primary router types and their corresponding protocols:
+The library is built around two primary router types and their corresponding protocols:
 
 1. **Router<Route>** (Router.swift:16) - Manages single-stack navigation
    - Handles push navigation via NavigationStack
@@ -98,7 +98,7 @@ The framework is built around two primary router types and their corresponding p
 
 ## Hierarchical Sheet Presentation
 
-The framework supports presenting sheets from within sheets (child sheets) with automatic detection:
+The library supports presenting sheets from within sheets (child sheets) with automatic detection:
 
 - Call `router.sheet()` anywhere - it automatically detects context
 - If no sheet is currently presented, creates a new root sheet
@@ -115,7 +115,7 @@ The framework supports presenting sheets from within sheets (child sheets) with 
 
 ## Universal Overlay
 
-The framework supports persistent overlay views that float above navigation content but below modal presentations (sheets/covers). Common use cases include mini-players, floating action buttons, or persistent banners.
+The library supports persistent overlay views that float above navigation content but below modal presentations (sheets/covers). Common use cases include mini-players, floating action buttons, or persistent banners.
 
 **Two Overlay Scopes:**
 1. **Router-level overlay** - Tied to a specific Router instance. In TabRouterView, dismissed when switching tabs.
