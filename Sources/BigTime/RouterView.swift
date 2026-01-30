@@ -144,6 +144,7 @@ private struct HierarchicalSheetModifier<Route: Routable>: ViewModifier {
 				}
 				.presentationDetents(item.presentation.detents ?? [.large])
 				.presentationDragIndicator(item.presentation.dragIndicator ?? .automatic)
+				.presentationBackgroundInteraction(item.presentation.backgroundInteraction ?? .automatic)
 				.hierarchicalSheet(
 					level: level + 1,
 					onScreenView: onScreenView,

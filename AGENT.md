@@ -19,6 +19,7 @@ router.switchRoot(.home)           // Change root route
 // Modal presentation
 router.sheet(.settings)                                    // Present sheet
 router.sheet(.picker, detents: [.medium])                  // Sheet with detents
+router.sheet(.picker, backgroundInteraction: .enabled)     // Allow background interaction
 router.fullScreenCover(.onboarding)                        // Full screen (iOS only)
 router.dismissSheet()                                      // Dismiss current sheet
 router.dismissAllSheets()                                  // Dismiss entire sheet stack
@@ -294,6 +295,18 @@ router.sheet(.picker, detents: [.medium, .large])
 
 ```swift
 router.sheet(.picker, dragIndicator: .visible)
+```
+
+### Sheet with Background Interaction
+
+Allow interaction with content behind the sheet:
+
+```swift
+router.sheet(
+    .picker,
+    detents: [.medium, .large],
+    backgroundInteraction: .enabled(upThrough: .medium)
+)
 ```
 
 ### Sheet with Dismiss Handler

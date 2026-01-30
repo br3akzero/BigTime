@@ -291,6 +291,18 @@ router.sheet(
 )
 ```
 
+### Background Interaction
+
+Allow users to interact with content behind the sheet:
+
+```swift
+router.sheet(
+    .picker,
+    detents: [.medium, .large],
+    backgroundInteraction: .enabled(upThrough: .medium)
+)
+```
+
 ### Custom Logging Subsystem
 
 Provide a custom subsystem for logging:
@@ -416,7 +428,7 @@ Observable router managing navigation state:
 - `pop()` - Pop from stack
 - `popToRoot()` - Clear stack
 - `switchRoot(_ root: Route)` - Change root route
-- `sheet(_ route: Route, detents:dragIndicator:onDismiss:)` - Present sheet (auto-detects hierarchical presentation)
+- `sheet(_ route: Route, detents:dragIndicator:backgroundInteraction:onDismiss:)` - Present sheet (auto-detects hierarchical presentation)
 - `fullScreenCover(_ route: Route, onDismiss:)` - Present cover
 - `dismissSheet()` - Dismiss topmost sheet (returns to parent if hierarchy exists)
 - `dismissAllSheets()` - Dismiss all sheets in the hierarchy
@@ -429,6 +441,7 @@ Represents a single sheet in the presentation hierarchy:
 - `route: Route` - The route being presented
 - `detents: Set<PresentationDetent>?` - Presentation detents
 - `dragIndicator: Visibility?` - Drag indicator visibility
+- `backgroundInteraction: PresentationBackgroundInteraction?` - Background interaction behavior
 - `onDismiss: (() -> Void)?` - Dismiss callback
 
 #### `TabRouter<TabRoute: TabRoutable>`

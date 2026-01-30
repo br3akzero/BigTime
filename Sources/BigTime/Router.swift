@@ -14,6 +14,7 @@ public struct SheetPresentation<Route: Routable> {
 	let route: Route
 	let detents: Set<PresentationDetent>?
 	let dragIndicator: Visibility?
+	let backgroundInteraction: PresentationBackgroundInteraction?
 	let onDismiss: (() -> Void)?
 }
 
@@ -63,6 +64,11 @@ public final class Router<Route: Routable> {
 	/// Drag indicator visibility for the sheet (computed from sheetStack for backward compatibility)
 	public var sheetPresentationDragIndicator: Visibility? {
 		sheetStack.last?.dragIndicator
+	}
+
+	/// Background interaction for the sheet (computed from sheetStack for backward compatibility)
+	public var sheetPresentationBackgroundInteraction: PresentationBackgroundInteraction? {
+		sheetStack.last?.backgroundInteraction
 	}
 
 	// - Service
@@ -119,17 +125,20 @@ public final class Router<Route: Routable> {
 	///   - route: The route to present
 	///   - detents: Presentation detents for the sheet
 	///   - dragIndicator: Drag indicator visibility
+	///   - backgroundInteraction: Background interaction behavior for the sheet
 	///   - onDismiss: Optional callback invoked when the sheet is dismissed
 	public func sheet(
 		_ route: Route,
 		detents: Set<PresentationDetent>? = nil,
 		dragIndicator: Visibility? = nil,
+		backgroundInteraction: PresentationBackgroundInteraction? = nil,
 		onDismiss: (() -> Void)? = nil
 	) {
 		let presentation = SheetPresentation(
 			route: route,
 			detents: detents,
 			dragIndicator: dragIndicator,
+			backgroundInteraction: backgroundInteraction,
 			onDismiss: onDismiss
 		)
 
