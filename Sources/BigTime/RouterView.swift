@@ -121,8 +121,8 @@ private struct HierarchicalSheetModifier<Route: Routable>: ViewModifier {
 	func body(content: Content) -> some View {
 		content
 			.sheet(isPresented: isPresented) {
-				if level < stack.count {
-					let presentation = stack[level]
+				if level < router.sheetStack.count {
+					let presentation = router.sheetStack[level]
 					NavigationStack {
 						presentation.route
 							.environment(router)
