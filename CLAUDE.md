@@ -111,8 +111,7 @@ The framework supports presenting sheets from within sheets (child sheets) with 
 **SwiftUI Limitation:** Child sheets do not work when the parent sheet uses non-large detents (e.g., `.medium`). This is a UIKit presentation controller limitation that SwiftUI inherits. Workarounds:
 1. Use `.large` detent for parent sheets that need to present child sheets
 2. Use navigation push within the sheet's NavigationStack instead of a child sheet
-3. Use `fullScreenCover` for the child presentation (works from sheets with any detent)
-4. Dismiss the parent sheet first, then present the child from the root level
+3. Dismiss the parent sheet first, then present the child from the root level
 
 ## Universal Overlay
 
